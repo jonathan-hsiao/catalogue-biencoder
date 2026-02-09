@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 import torch
-from transformers import AutoTokenizer, AutoProcessor, AutoModel, Siglip2VisionModel
+from transformers import AutoTokenizer, AutoModel, Siglip2ImageProcessor, Siglip2VisionModel
 from torch.utils.data import DataLoader
 from accelerate import Accelerator
 
@@ -114,8 +114,8 @@ def main():
     all_cats_list = sorted(all_cats_set)
     cat2id = {cat: i for i, cat in enumerate(all_cats_list)}
 
-    # Create collator and loader
-    vision_processor = AutoProcessor.from_pretrained(cfg.vision_ckpt)
+    # Create collator and loader (Siglip2ImageProcessor for pixel_attention_mask, spatial_shapes)
+    vision_processor = Siglip2ImageProcessor.from_pretrained(cfg.vision_ckpt)
     text_tokenizer = AutoTokenizer.from_pretrained(cfg.text_ckpt)
     collator_export = BatchCollator(vision_processor, text_tokenizer, cfg, cat2id=cat2id, include_export_metadata=True)
 

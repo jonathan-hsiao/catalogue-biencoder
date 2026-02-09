@@ -16,8 +16,8 @@ from tqdm.auto import tqdm
 from datasets import load_dataset
 from transformers import (
     AutoTokenizer,
-    AutoProcessor,
     AutoModel,
+    Siglip2ImageProcessor,
     Siglip2VisionModel,
     get_linear_schedule_with_warmup,
 )
@@ -158,8 +158,9 @@ def run(cfg: TrainConfig) -> None:
     cat2id = {cat: i for i, cat in enumerate(all_cats_list)}
 
     # ---- tokenizers / processors ----
-    # Vision: SigLIP2 uses an AutoProcessor for image preprocessing
-    vision_processor = AutoProcessor.from_pretrained(cfg.vision_ckpt)
+    # Use Siglip2ImageProcessor so we get pixel_values, pixel_attention_mask, spatial_shapes.
+    # AutoProcessor can load Siglip (v1) from the same ckpt, which does not return those keys.
+    vision_processor = Siglip2ImageProcessor.from_pretrained(cfg.vision_ckpt)
     # Text: BGE tokenizer
     text_tokenizer = AutoTokenizer.from_pretrained(cfg.text_ckpt)
 
