@@ -76,13 +76,16 @@ class TwoTowerReranker(nn.Module):
         """SigLIP2: vision backbone → pooler_output → our ProjectionMLP. When vision is frozen, no graph is stored (VRAM/speed)."""
         grad_enabled = any(p.requires_grad for p in self.vision.parameters())
         with torch.set_grad_enabled(grad_enabled):
-            out = self.vision(
+            # Call inner vision_model directly to avoid duplicate attention_mask (Siglip2VisionModel
+            # forwards pixel_attention_mask as attention_mask and can pass it again in **kwargs).
+            # Return type: BaseModelOutputWithPooling with pooler_output.
+            out = self.vision.vision_model(
                 pixel_values=batch["pixel_values"],
-                pixel_attention_mask=batch.get("pixel_attention_mask"),
+                attention_mask=batch.get("pixel_attention_mask"),
                 spatial_shapes=batch.get("spatial_shapes"),
                 return_dict=True,
             )
-            h = out.pooler_output
+            h = out.pooler_output  # (B, vision_dim)
         return self.proj_img(h)
 
     def encode_text(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
