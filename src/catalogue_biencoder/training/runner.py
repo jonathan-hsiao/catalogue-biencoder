@@ -18,6 +18,7 @@ from transformers import (
     AutoTokenizer,
     AutoProcessor,
     AutoModel,
+    Siglip2Model,
     Siglip2VisionModel,
     get_linear_schedule_with_warmup,
 )
@@ -187,8 +188,12 @@ def run(cfg: TrainConfig) -> None:
     )
 
     # ---- load encoders (SigLIP2 ViT-B + BGE v1.5) ----
-    # Vision-only to avoid unused text tower params and LoRA latching onto text layers.
-    vision_encoder = Siglip2VisionModel.from_pretrained(cfg.vision_ckpt)
+    # Load full SigLIP2 and take the vision submodule so all vision weights (including patch_embedding)
+    # load correctly; then drop the text tower to save memory. Avoids ignore_mismatched_sizes reinit.
+    full_siglip = Siglip2Model.from_pretrained(cfg.vision_ckpt)
+    vision_encoder = Siglip2VisionModel(full_siglip.config.vision_config)
+    vision_encoder.vision_model = full_siglip.vision_model
+    del full_siglip
     text_encoder = AutoModel.from_pretrained(cfg.text_ckpt)
 
     # Encoder output dims: Siglip2VisionModel.config.hidden_size, BGE hidden_size

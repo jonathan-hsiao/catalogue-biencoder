@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 import torch
-from transformers import AutoTokenizer, AutoProcessor, AutoModel, Siglip2VisionModel
+from transformers import AutoTokenizer, AutoProcessor, AutoModel, Siglip2Model, Siglip2VisionModel
 from torch.utils.data import DataLoader
 from accelerate import Accelerator
 
@@ -36,8 +36,11 @@ def load_model_from_checkpoint(checkpoint_dir: str, device: str = "cuda"):
         cfg_dict = json.load(f)
     cfg = TrainConfig(**cfg_dict)
 
-    # Load encoders
-    vision_encoder = Siglip2VisionModel.from_pretrained(cfg.vision_ckpt)
+    # Load vision encoder from full SigLIP2 so all vision weights load (no patch_embedding reinit)
+    full_siglip = Siglip2Model.from_pretrained(cfg.vision_ckpt)
+    vision_encoder = Siglip2VisionModel(full_siglip.config.vision_config)
+    vision_encoder.vision_model = full_siglip.vision_model
+    del full_siglip
     text_encoder = AutoModel.from_pretrained(cfg.text_ckpt)
 
     # Load LoRA adapters if they exist
