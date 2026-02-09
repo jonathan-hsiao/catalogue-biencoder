@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "catalogue-biencoder"
+version = "0.1.0"
+description = "Two-tower multimodal reranker for product categorization"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.1",
+    # SigLIP2: processor must return pixel_values, pixel_attention_mask, spatial_shapes;
+    # Siglip2VisionModel forward accepts these and returns pooler_output. Required as of 4.53.3.
+    "transformers>=4.53.3",
+    "datasets>=2.18.0",
+    "accelerate>=0.30.0",
+    "peft>=0.11.0",
+    "tqdm",
+    "pillow",
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.txt"]
