@@ -37,9 +37,6 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb
 
-# Private-repo instructions (do not commit)
-notebooks/PRIVATE_REPO_GUIDE.md
-
 # Planning and original script (reference only)
 planning/
 original_script.py

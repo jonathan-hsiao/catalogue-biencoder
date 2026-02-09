@@ -1,82 +1,73 @@
 # Running catalogue-biencoder in Google Colab
 
-This guide sets up Colab so you can clone the repo, run training, and save all outputs (checkpoints, logs, embeddings) to Google Drive so they persist after the runtime disconnects.
+This guide sets up Colab so you can clone the repo, run training, and save all outputs (checkpoints, logs, embeddings) to Google Drive.
 
 ---
 
-## 1. Mount Drive and set paths
+## 1. Setup (one cell) — copy-paste and run
 
-Run this in your first Colab cell:
-
-```python
-from google.colab import drive
-drive.mount("/content/drive")
-
-# Where to store all run outputs (checkpoints, logs, embeddings)
-DRIVE_RUNS = "/content/drive/MyDrive/catalogue_biencoder_runs"
-REPO_DIR = "/content/catalogue_biencoder"  # clone here (faster than cloning to Drive)
-```
-
----
-
-## 2. Clone repo and install
+Run this **entire block** in a single Colab cell:
 
 ```python
 import os
-
-# Clone to /content (faster I/O than Drive)
-if not os.path.exists(REPO_DIR):
-    !git clone https://github.com/jonathan-hsiao/catalogue-biencoder.git {REPO_DIR}
-else:
-    !cd {REPO_DIR} && git pull
-
-%cd {REPO_DIR}
-!pip install -e . -q
-```
-
----
-
-## 3. Run training with outputs on Drive
-
-```python
 import sys
-sys.path.insert(0, REPO_DIR)
+import subprocess
+from google.colab import drive
+from IPython import get_ipython
+
+# Mount Google Drive
+drive.mount("/content/drive")
+
+DRIVE_RUNS = "/content/drive/MyDrive/catalogue_biencoder_runs"
+REPO_DIR = "/content/catalogue_biencoder"
+os.makedirs(DRIVE_RUNS, exist_ok=True)
+
+# Clone (public repo; use f-string so REPO_DIR is expanded in the shell)
+if not os.path.exists(REPO_DIR):
+    get_ipython().system(f'git clone https://github.com/jonathan-hsiao/catalogue-biencoder.git {REPO_DIR}')
+else:
+    get_ipython().system(f'cd {REPO_DIR} && git pull')
+
+# Install with the same Python as the notebook
+subprocess.run([sys.executable, "-m", "pip", "install", "-e", ".", "-q"], cwd=REPO_DIR, check=True)
+
+# Use package under src/; avoid repo root being seen as catalogue_biencoder
+REPO_SRC = os.path.join(REPO_DIR, "src")
+sys.path = [p for p in sys.path if p not in ("/content", REPO_DIR)]
+sys.path.insert(0, REPO_SRC)
+
+# Clear cached import if this cell was run before (no-op on fresh runtime)
+for key in list(sys.modules.keys()):
+    if key == "catalogue_biencoder" or key.startswith("catalogue_biencoder."):
+        del sys.modules[key]
 
 from catalogue_biencoder.config import TrainConfig
 from catalogue_biencoder.training.runner import run
+```
 
-cfg = TrainConfig()
+**Private repo?** Use the same cell but clone with a token: add `from google.colab import userdata`, `token = userdata.get("GITHUB_PAT")`, and use  
+`get_ipython().system(f'git clone https://x-access-token:{token}@github.com/jonathan-hsiao/catalogue-biencoder.git {REPO_DIR}')` in the clone branch.
 
-# Send all outputs to Drive (persistent)
-cfg.output_dir = DRIVE_RUNS
-# Optional: set run name so you can find it later
-# cfg.run_name = "colab_run_1"
-# Optional: more epochs for better embeddings
-# cfg.stage0_epochs = 2
-# cfg.stage1_epochs = 2
-# cfg.stage2_epochs = 2
+---
 
+## 2. Run training (next cell)
+
+In the **next** cell, configure and run. Outputs go to Drive (`DRIVE_RUNS`).
+
+```python
+cfg = TrainConfig(
+    output_dir=DRIVE_RUNS,
+    stage0_epochs=2,
+    stage1_epochs=2,
+    stage2_epochs=2,
+)
 run(cfg)
 ```
 
-All run artifacts (e.g. `artifacts/runs_product_catalogue/<run_name>/`) will live under `DRIVE_RUNS` on your Drive.
+Optional: set `cfg.run_name = "colab_run_1"` (or any name) so you can find the run folder easily under `DRIVE_RUNS`.
 
 ---
 
-## 4. Optional: create the Drive folder first
+## 3. After training
 
-```python
-os.makedirs(DRIVE_RUNS, exist_ok=True)
-```
-
----
-
-## Summary
-
-| Step | Purpose |
-|------|--------|
-| Mount Drive | So outputs persist after you disconnect. |
-| Clone to `/content/` | Fast disk for git and training; clone once, reuse. |
-| `cfg.output_dir = DRIVE_RUNS` | All checkpoints, logs, and embeddings go to Drive. |
-
-After training, find your run in **My Drive → catalogue_biencoder_runs**. On later sessions, run the mount and clone/install cells again, then the training cell; you don’t need to re-clone if you only care about new runs.
+After training, find your run in **My Drive → catalogue_biencoder_runs**. On a new session, run the setup cell again, then the training cell.
