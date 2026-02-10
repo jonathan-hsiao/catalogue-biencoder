@@ -242,7 +242,7 @@ def _truncate(s: str, max_chars: int) -> str:
     return s[: max_chars - 1] + "…"
 
 
-def export_metadata_split(
+def export_raw_text_split(
     ds_name: str,
     split: str,
     out_path: str,
