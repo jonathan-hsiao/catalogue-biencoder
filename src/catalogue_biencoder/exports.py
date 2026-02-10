@@ -177,7 +177,7 @@ def save_thumbnail(
         raise ValueError(f"Unsupported format: {fmt}")
 
 
-def process_split(
+def process_image_split(
     ds_name: str,
     split: str,
     out_dir: str,
@@ -227,3 +227,67 @@ def process_split(
         f"exists={skipped_exists} missing={skipped_missing} failed={failed} "
         f"out={split_dir}"
     )
+
+
+def _clean_text(s: Optional[str]) -> str:
+    s = (s or "").strip()
+    # Collapse whitespace/newlines for nicer UI tooltips
+    s = " ".join(s.split())
+    return s
+
+
+def _truncate(s: str, max_chars: int) -> str:
+    if max_chars <= 0 or len(s) <= max_chars:
+        return s
+    return s[: max_chars - 1] + "…"
+
+
+def export_metadata_split(
+    ds_name: str,
+    split: str,
+    out_path: str,
+    max_desc_chars: int,
+    include_candidates: bool,
+) -> None:
+    ds = load_dataset(ds_name, split=split)
+
+    # Drop image column to avoid decoding / overhead.
+    keep = {
+        "product_title",
+        "product_description",
+        "ground_truth_brand",
+        "ground_truth_is_secondhand",
+        "ground_truth_category",
+    }
+    if include_candidates:
+        keep.add("potential_product_categories")
+
+    drop_cols = [c for c in ds.column_names if c not in keep]
+    if drop_cols:
+        ds = ds.remove_columns(drop_cols)
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        for idx, row in enumerate(tqdm(ds, desc=f"export:{split}", total=len(ds))):
+            title = _clean_text(row.get("product_title"))
+            desc = _truncate(_clean_text(row.get("product_description")), max_desc_chars)
+
+            rec = {
+                "idx": idx,  # <-- key used to join with embeddings + thumbnails
+                "split": split,
+                "product_title": title,
+                "product_description": desc,
+                "ground_truth_brand": _clean_text(row.get("ground_truth_brand")),
+                "ground_truth_is_secondhand": bool(row.get("ground_truth_is_secondhand", False)),
+                "ground_truth_category": _clean_text(row.get("ground_truth_category")),
+            }
+
+            if include_candidates:
+                cands = row.get("potential_product_categories") or []
+                # Keep raw strings; your training code normalizes spacing later if needed
+                rec["potential_product_categories"] = [str(x) for x in cands]
+
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    print(f"[{split}] wrote: {out_path} (rows={len(ds)})")
