@@ -3,13 +3,15 @@ Embedding export utilities for visualization and analysis.
 """
 import os
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from accelerate import Accelerator
+from datasets import load_dataset
+from PIL import Image
 
 from .config import TrainConfig
 from .modeling import TwoTowerReranker
@@ -134,3 +136,94 @@ def compute_dataset_stats(train_hf: Any, test_hf: Any) -> Dict[str, Any]:
             "avg_candidate_length": sum(lengths) / n if n else 0.0,
         }
     return {"train": _stats(train_hf), "test": _stats(test_hf)}
+
+
+def safe_get_pil_image(x) -> Optional[Image.Image]:
+    """
+    HF Image feature usually yields a PIL Image. Sometimes it may be None.
+    """
+    if x is None:
+        return None
+    if isinstance(x, Image.Image):
+        return x
+    # Some HF setups return dict-like with "bytes"/"path"; dataset should decode to PIL by default.
+    # Try a best-effort conversion if possible.
+    try:
+        return x.convert("RGB")  # type: ignore[attr-defined]
+    except Exception:
+        return None
+
+
+def save_thumbnail(
+    img: Image.Image,
+    out_path: str,
+    size: int,
+    fmt: str,
+    quality: int,
+) -> None:
+    img = img.convert("RGB")
+    # Preserve aspect ratio; fit within (size, size)
+    img.thumbnail((size, size), resample=Image.Resampling.LANCZOS)
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+
+    if fmt.lower() == "webp":
+        img.save(out_path, format="WEBP", quality=quality, method=6)
+    elif fmt.lower() in ("jpg", "jpeg"):
+        img.save(out_path, format="JPEG", quality=quality, optimize=True, progressive=True)
+    elif fmt.lower() == "png":
+        img.save(out_path, format="PNG", optimize=True)
+    else:
+        raise ValueError(f"Unsupported format: {fmt}")
+
+
+def process_split(
+    ds_name: str,
+    split: str,
+    out_dir: str,
+    size: int,
+    fmt: str,
+    quality: int,
+    overwrite: bool,
+    limit: Optional[int],
+) -> None:
+    ds = load_dataset(ds_name, split=split)  # loads only the split
+    split_dir = os.path.join(out_dir, split)
+    os.makedirs(split_dir, exist_ok=True)
+
+    n = len(ds) if limit is None else min(len(ds), limit)
+
+    pbar = tqdm(range(n), desc=f"thumbnails:{split}")
+    skipped_missing = 0
+    skipped_exists = 0
+    failed = 0
+
+    for idx in pbar:
+        out_path = os.path.join(split_dir, f"{idx}.{fmt.lower()}")
+        if (not overwrite) and os.path.exists(out_path):
+            skipped_exists += 1
+            continue
+
+        row = ds[idx]
+        img = safe_get_pil_image(row.get("product_image"))
+
+        if img is None:
+            skipped_missing += 1
+            continue
+
+        try:
+            save_thumbnail(img, out_path, size=size, fmt=fmt, quality=quality)
+        except Exception:
+            failed += 1
+
+        pbar.set_postfix(
+            exists=skipped_exists,
+            missing=skipped_missing,
+            failed=failed,
+        )
+
+    print(
+        f"[{split}] done. wrote={n - skipped_exists - skipped_missing - failed} "
+        f"exists={skipped_exists} missing={skipped_missing} failed={failed} "
+        f"out={split_dir}"
+    )
