@@ -22,7 +22,7 @@ DRIVE_RUNS = "/content/drive/MyDrive/catalogue_biencoder_runs"
 REPO_DIR = "/content/catalogue_biencoder"
 os.makedirs(DRIVE_RUNS, exist_ok=True)
 
-# Clone (public repo; use f-string so REPO_DIR is expanded in the shell)
+# Clone (public repo)
 if not os.path.exists(REPO_DIR):
     get_ipython().system(f'git clone https://github.com/jonathan-hsiao/catalogue-biencoder.git {REPO_DIR}')
 else:
@@ -45,7 +45,7 @@ from catalogue_biencoder.config import TrainConfig
 from catalogue_biencoder.training.runner import run
 ```
 
-**Private repo?** Use the same cell but clone with a token: add `from google.colab import userdata`, `token = userdata.get("GITHUB_PAT")`, and use  
+If private repo, use the same cell but clone with a token: add `from google.colab import userdata`, `token = userdata.get("GITHUB_PAT")`, and use  
 `get_ipython().system(f'git clone https://x-access-token:{token}@github.com/jonathan-hsiao/catalogue-biencoder.git {REPO_DIR}')` in the clone branch.
 
 ---
