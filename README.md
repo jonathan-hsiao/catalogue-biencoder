@@ -2,6 +2,8 @@
 
 Two-tower multimodal reranker for product categorization using the Shopify [product catalogue dataset](https://huggingface.co/datasets/Shopify/product-catalogue).
 
+Powers the data visualization web app at: https://embedding-constellations.pages.dev/.
+
 ## Overview
 
 This project implements a two-tower architecture that learns to rank product categories given:
