@@ -100,7 +100,3 @@ Uses the Shopify [product catalogue dataset](https://huggingface.co/datasets/Sho
 - Train: ~39K products
 - Test: ~10K products
 - ~10K unique category paths
-
-## License
-
-[Add your license here]
