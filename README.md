@@ -1,6 +1,6 @@
 # Product Catalogue Bi-Encoder Reranker
 
-Two-tower multimodal reranker for product categorization using the Shopify product catalogue dataset.
+Two-tower multimodal reranker for product categorization using the Shopify [product catalogue dataset](https://huggingface.co/datasets/Shopify/product-catalogue).
 
 ## Overview
 
@@ -96,7 +96,7 @@ cfg.lr = 1e-4
 
 ## Dataset
 
-Uses the Shopify product catalogue dataset from HuggingFace:
+Uses the Shopify [product catalogue dataset](https://huggingface.co/datasets/Shopify/product-catalogue) from HuggingFace:
 - Train: ~39K products
 - Test: ~10K products
 - ~10K unique category paths
