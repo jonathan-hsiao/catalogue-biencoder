@@ -14,11 +14,30 @@ The model produces stable product embeddings that can be used for visualization,
 
 ## Architecture
 
-- **Vision Tower**: SigLIP2 ViT-B (`google/siglip2-base-patch16-256`)
-- **Text Tower**: BGE v1.5 base (`BAAI/bge-base-en-v1.5`)
+- **Vision Model**: SigLIP2 ViT-B (`google/siglip2-base-patch16-256`)
+- **Text Model**: BGE v1.5 base (`BAAI/bge-base-en-v1.5`)
 - **Projections**: 2-layer MLP + LayerNorm → 512-dim embeddings
 - **Fusion**: Gated fusion with modality dropout
 - **Loss**: Listwise softmax + contrastive regularization (multi-positive InfoNCE with cross-batch queue)
+
+## Training Stages
+
+The model trains in three stages:
+
+1. **Stage 0**: Train projections + fusion only (LoRA applied but frozen)
+2. **Stage 1**: Unfreeze text tower LoRA (r=8)
+3. **Stage 2**: Unfreeze vision tower LoRA (r=4)
+
+## Outputs
+
+Training produces:
+- Checkpoints per stage (`checkpoint_<stage>/`)
+- Training logs (`training_log.jsonl`)
+- Final metrics (`final_metrics.json`)
+- Product embeddings (`embeddings/train_product_emb.*`, `embeddings/test_product_emb.*`)
+- Category embeddings (`embeddings/unique_category_emb.*`)
+
+All outputs are saved to `artifacts/runs_product_catalogue/<run_name>/` by default.
 
 ## Installation
 
@@ -60,32 +79,7 @@ cfg = TrainConfig()
 run(cfg)
 ```
 
-### Export Embeddings
-
-```bash
-python scripts/export.py <checkpoint_dir> [--output_dir <dir>] [--split train|test]
-```
-
-## Training Stages
-
-The model trains in three stages:
-
-1. **Stage 0**: Train projections + fusion only (no LoRA)
-2. **Stage 1**: Add LoRA to text tower (r=8)
-3. **Stage 2**: Add LoRA to vision tower (r=4)
-
-## Outputs
-
-Training produces:
-- Checkpoints per stage (`checkpoint_<stage>/`)
-- Training logs (`training_log.jsonl`)
-- Final metrics (`final_metrics.json`)
-- Product embeddings (`embeddings/train_product_emb.*`, `embeddings/test_product_emb.*`)
-- Category embeddings (`embeddings/unique_category_emb.*`)
-
-All outputs are saved to `artifacts/runs_product_catalogue/<run_name>/` by default.
-
-## Configuration
+### Configuration
 
 Modify `TrainConfig` in `src/catalogue_biencoder/config.py` or override values programmatically:
 
@@ -95,6 +89,13 @@ cfg.train_batch_size = 32
 cfg.lr = 1e-4
 # ... etc
 ```
+
+### Export Embeddings
+
+```bash
+python scripts/export.py <checkpoint_dir> [--output_dir <dir>] [--split train|test]
+```
+
 
 ## Dataset
 
