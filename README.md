@@ -4,6 +4,8 @@ Two-tower multimodal reranker for product categorization using the Shopify [prod
 
 Powers the data visualization web app at: https://embedding-constellations.pages.dev/.
 
+<img src="docs/images/demo_0.png" alt="Demo Viz" width="600" />
+
 ## Overview
 
 This project implements a two-tower architecture that learns to rank product categories given:
