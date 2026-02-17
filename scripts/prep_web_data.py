@@ -3,21 +3,7 @@
 # + COARSE CATEGORY STARS (depth=2 or 3) WITH ALL/TRAIN/TEST COUNTS
 # =========================
 #
-# Goal:
-# Prepare web data for a web application that displays an interactive visualization of product embeddings.
-# Features:
-# - 3D visualization of product embeddings with pan/zoom 
-# - Category constellations - color by top-level category, show granular category centroids as "stars", draw faint "gravity lines" for selected category 
-# - Mouseover tooltip-style details (image, title, brand, description) 
-# - Click product point for neighborhood compare 
-# - Highlight neighbor points and display neighbor details (title, description, brand, image) in slide-in sidebar, with ability to switch between text space, image space, and fused space 
-# - Ability to highlight "Ambiguous products" (defined as products that were categorized incorrectly by the biencoder) 
-# Visual polish: 
-# - Must be beautiful, "wow" factor 
-# - Dark space theme with subtle bloom/glow sprites that look like stars/planets 
-# - Smooth camera transitions (fly-to selection, zoom/pan around in 3D space) 
-# Tech stack: 
-# - webgl, Next.js, React
+# Prepares web data for web application that displays an interactive visualization of product embeddings.
 #
 # Assumes your Google Drive has:
 # - Thumbnails zips:
