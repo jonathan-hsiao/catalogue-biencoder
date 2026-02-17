@@ -43,7 +43,7 @@ Two-tower multimodal bi-encoder reranker for product categorization using the [S
 
 ### Architecture Diagram
 
-![Architecture Diagram](images/architecture_diagram.png "Architecture Diagram")
+<img src="images/architecture_diagram.png" alt="Architecture Diagram" width="400" />
 
 ## Components
 
@@ -173,7 +173,7 @@ Literature Basis:
 
 Contrastive Loss Diagram
 
-![Contrastive Loss Diagram](images/contrastive_loss_diagram.png, "Contrastive Loss Diagram")
+<img src="images/contrastive_loss_diagram.png" alt="Contrastive Loss Diagram" width="500" />
 
 ### Configuration
 
@@ -215,7 +215,7 @@ Contrastive Loss Diagram
 
 **Embedding Quality:** Good global structure, products cluster by category, neighborhoods are semantically meaningful.
 
-![Viz Demo](images/demo_0.png, "Viz Demo")
+<img src="images/demo_0.png" alt="Viz Demo" width="700" />
 
 ## Visualization Pipeline
 

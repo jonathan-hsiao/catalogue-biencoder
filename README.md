@@ -20,6 +20,10 @@ The model produces stable product embeddings that can be used for visualization,
 - **Fusion**: Gated fusion with modality dropout
 - **Loss**: Listwise softmax + contrastive regularization (multi-positive InfoNCE with cross-batch queue)
 
+### Architecture Diagram
+
+<img src="docs/images/architecture_diagram.png" alt="Architecture Diagram" width="400" />
+
 ## Training Stages
 
 The model trains in three stages:
